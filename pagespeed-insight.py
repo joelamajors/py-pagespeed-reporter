@@ -17,10 +17,11 @@ def process_api_call(u):
         # Getting URL
         ID2 = str(line)
 
-        # Check if request is for Mobile or Desktop
+        # URL of the page
         urlid = final['id']
 
-        if 'mobile' in urlid:
+        # Check if request is for Mobile or Desktop
+        if '?strategy=mobile' in u:
             test_type = "Mobile"
         else: 
             test_type = "Desktop"
@@ -71,7 +72,6 @@ def process_api_call(u):
 parser = argparse.ArgumentParser(description='Pagespeed Insight API script')
 parser.add_argument("-m", "--mobile", action="store_true", help="Run mobile only test\n")
 parser.add_argument("-d", "--desktop", action="store_true", help="Run desktop only test\n")
-parser.add_argument("-b", "--both", action="store_true", help="Run both mobile and desktop\n")
 
 args = parser.parse_args()
 
