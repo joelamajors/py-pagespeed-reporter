@@ -1,4 +1,4 @@
-# pagespeed-insight
+# page-reporter
 Runs Googles Pagespeed insight report AND Lighthouse reports across a list of URLs
 
 ## Requirements
