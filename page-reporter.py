@@ -12,6 +12,8 @@ def process_api_call(u):
 
     # Appending pagespeed key to end of URL
     r = requests.get(u+"&key="+pagespeed_key)
+    print("Getting Pagespeed Insight for " + u)
+
     final = r.json()
 
     try:
@@ -73,38 +75,41 @@ def process_lighthouse(link):
     
     # Check if report is completed, if not, then wait until it's finished. 
     while not os.path.exists('./lighthouse_report.json'):
+        print("Waiting for lighthouse_report.json to finish")
         time.sleep(30)
     
+
     if os.path.isfile('./lighthouse_report.json'):
 
-    with open('./lighthouse_report.json', 'r', encoding='utf8') as json_data:
-        loaded_json = json.load(json_data)
-                
-        # Calculating if test is for mobile or desktop
-        if '--form-factor="mobile"' in link:
-            lh_type = "Mobile"
-        else:
-            lh_type = "Desktop"
-        
-        # Getting scores
-        lh_url = str(line)
-        lh_performance = str(round(loaded_json["categories"]["performance"]["score"] * 100))
-        lh_seo = str(round(loaded_json["categories"]["seo"]["score"] * 100))
-        lh_accessibility = str(round(loaded_json["categories"]["accessibility"]["score"] * 100))
-        lh_best_practice = str(round(loaded_json["categories"]["best-practices"]["score"] * 100))
-        lh_fcp = str(round(loaded_json["audits"]["first-contentful-paint"]["score"] * 100))
-        lh_speed_index = str(round(loaded_json["audits"]["speed-index"]["score"] * 100))
-        lh_lcp = str(round(loaded_json["audits"]["largest-contentful-paint"]["score"] * 100))
-        lh_interactice = str(round(loaded_json["audits"]["interactive"]["score"] * 100))
-        lh_tbt = str(round(loaded_json["audits"]["total-blocking-time"]["score"] * 100))
-        lh_cls = str(round(loaded_json["audits"]["cumulative-layout-shift"]["score"] * 100))
+        with open('./lighthouse_report.json', 'r', encoding='utf8') as json_data:
 
-        try:
-            row = f'{lh_url},{lh_type},{lh_performance},{lh_accessibility},{lh_best_practice},{lh_seo},{lh_fcp},{lh_speed_index},{lh_lcp},{lh_interactice},{lh_tbt},{lh_cls}\n'
-            file.write(row)
-        except NameError:
-            print(f'<NameError> Failing because of KeyError {line}.')
-            file.write(f'<KeyError> & <NameError> Failing because of nonexistant Key ~ {line}.' + '\n')
+            loaded_json = json.load(json_data)
+                    
+            # Calculating if test is for mobile or desktop
+            if '--form-factor="mobile"' in link:
+                lh_type = "Mobile"
+            else:
+                lh_type = "Desktop"
+            
+            # Getting scores
+            lh_url = str(line)
+            lh_performance = str(round(loaded_json["categories"]["performance"]["score"] * 100))
+            lh_seo = str(round(loaded_json["categories"]["seo"]["score"] * 100))
+            lh_accessibility = str(round(loaded_json["categories"]["accessibility"]["score"] * 100))
+            lh_best_practice = str(round(loaded_json["categories"]["best-practices"]["score"] * 100))
+            lh_fcp = str(round(loaded_json["audits"]["first-contentful-paint"]["score"] * 100))
+            lh_speed_index = str(round(loaded_json["audits"]["speed-index"]["score"] * 100))
+            lh_lcp = str(round(loaded_json["audits"]["largest-contentful-paint"]["score"] * 100))
+            lh_interactice = str(round(loaded_json["audits"]["interactive"]["score"] * 100))
+            lh_tbt = str(round(loaded_json["audits"]["total-blocking-time"]["score"] * 100))
+            lh_cls = str(round(loaded_json["audits"]["cumulative-layout-shift"]["score"] * 100))
+
+            try:
+                row = f'{lh_url},{lh_type},{lh_performance},{lh_accessibility},{lh_best_practice},{lh_seo},{lh_fcp},{lh_speed_index},{lh_lcp},{lh_interactice},{lh_tbt},{lh_cls}\n'
+                file.write(row)
+            except NameError:
+                print(f'<NameError> Failing because of KeyError {line}.')
+                file.write(f'<KeyError> & <NameError> Failing because of nonexistant Key ~ {line}.' + '\n')
     
     # Delete Lighthouse Report to prevent conflict between reports
     os.remove('./lighthouse_report.json')
