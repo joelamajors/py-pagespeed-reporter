@@ -4,17 +4,34 @@ import sys
 import os
 import json
 import time
+import concurrent.futures
 
 """ Functions Start """
 
+spaces = ' ' * 40
+
 # Pagespeed Insight Function - takes the requesting URL as a parameter
-def process_api_call(u):
+def pagespeed_insight(u):
+    print(f"Generating PageSpeed Insight for {output_name}..." + spaces, end="\r")
 
     # Appending pagespeed key to end of URL
     r = requests.get(u+"&key="+pagespeed_key)
-    print("Getting Pagespeed Insight for " + u)
 
     final = r.json()
+
+    # Check if request is for Mobile or Desktop
+    if '?strategy=mobile' in u:
+        test_type = "Mobile"
+        
+    else: 
+        test_type = "Desktop"
+
+    # Paths for data dump
+    pagespeed_path = "./pagespeed-reports/"+test_type.lower()+"/"+output_name.lower()+"-"+test_type.lower()
+    
+    # Saving JSON file
+    with open(pagespeed_path+".json", "w+") as pagespeed_json_file:
+        json.dump(final, pagespeed_json_file)
 
     try:
         # Getting URL
@@ -22,12 +39,6 @@ def process_api_call(u):
 
         # URL of the page
         urlid = final['id']
-
-        # Check if request is for Mobile or Desktop
-        if '?strategy=mobile' in u:
-            test_type = "Mobile"
-        else: 
-            test_type = "Desktop"
 
         # Overall Score
         overall_score = round(final["lighthouseResult"]["categories"]["performance"]["score"] * 100)
@@ -70,26 +81,32 @@ def process_api_call(u):
 
 
 # Lighthouse function - runs Lighthouse node module
-def process_lighthouse(link):
+def lighthouse(link):
     os.popen(link)
+
+    print(f"Generating Lighthouse Report for {output_name}...", end="\r")
+
+    # Calculating if query is for mobile or desktop
+    if '--form-factor="mobile"' in link:
+        lh_type = "Mobile"
+    else:
+        lh_type = "Desktop"
+
+    # Calculating path for light house reports
+    data_export = "./lighthouse-reports/"+lh_type.lower()+"/"+output_name+"-"+lh_type.lower()+".json"
     
     # Check if report is completed, if not, then wait until it's finished. 
-    while not os.path.exists('./lighthouse_report.json'):
-        print("Waiting for lighthouse_report.json to finish")
-        time.sleep(30)
-    
+    while not os.path.exists(data_export):
+        print(f"Waiting for {output_name}.json to finish generating..." + spaces, end="\r")
+        time.sleep(1)
 
-    if os.path.isfile('./lighthouse_report.json'):
+    if os.path.isfile(data_export):
 
-        with open('./lighthouse_report.json', 'r', encoding='utf8') as json_data:
+        print(f"Writing {output_name} report..." + spaces, end='\r')
+
+        with open(data_export, 'r', encoding='utf8') as json_data:
 
             loaded_json = json.load(json_data)
-                    
-            # Calculating if test is for mobile or desktop
-            if '--form-factor="mobile"' in link:
-                lh_type = "Mobile"
-            else:
-                lh_type = "Desktop"
             
             # Getting scores
             lh_url = str(line)
@@ -110,11 +127,11 @@ def process_lighthouse(link):
             except NameError:
                 print(f'<NameError> Failing because of KeyError {line}.')
                 file.write(f'<KeyError> & <NameError> Failing because of nonexistant Key ~ {line}.' + '\n')
-    
-    # Delete Lighthouse Report to prevent conflict between reports
-    os.remove('./lighthouse_report.json')
+
 
 """ Functions End """
+
+print("Generating reports...\n\n")
 
 # Setting up arguments for script
 parser = argparse.ArgumentParser(description='Pagespeed Insight API script')
@@ -126,9 +143,16 @@ args = parser.parse_args()
 # Pagespeed API Key
 pagespeed_key = os.environ['pagespeed']
 
+
+# Creating folders for data dump
+os.makedirs("./lighthouse-reports/desktop")
+os.makedirs("./lighthouse-reports/mobile")
+os.makedirs("./pagespeed-reports/desktop")
+os.makedirs("./pagespeed-reports/mobile")
+
 # Writing to CSV
 with open('urls.txt') as pagespeedurls:
-    download_dir = 'pagespeed-report.csv'
+    download_dir = 'pagespeed-reports/pagespeed-report.csv'
     file = open(download_dir, 'w+')
     content = pagespeedurls.readlines()
     content = [line.rstrip('\n') for line in content]
@@ -138,6 +162,9 @@ with open('urls.txt') as pagespeedurls:
 
     # This is the google pagespeed API structure
     for line in content:
+
+        # Used to save the reports as the page name
+        output_name = line.rsplit('/',1)[1]
         
         # Removes trailing forward slash from link if it's there
         new_line = line.rstrip("/")
@@ -157,14 +184,15 @@ with open('urls.txt') as pagespeedurls:
         # If statement to see if API is needed for mobile, desktop or both.
         if len(x) == 2:
             for url in x:
-                process_api_call(url)
+
+                pagespeed_insight(url)
         else: 
-            process_api_call(x)
+            pagespeed_insight(x)
     file.close()
 
 # Writing to lighthouse CSV
 with open('urls.txt') as lighthouseurls:
-    download_dir = 'lighthouse-report.csv'
+    download_dir = 'lighthouse-reports/lighthouse-report.csv'
     file = open(download_dir, 'w+')
     content = lighthouseurls.readlines()
     content = [line.rstrip('\n') for line in content]
@@ -173,6 +201,9 @@ with open('urls.txt') as lighthouseurls:
     file.write(columnTitleRow)
 
     for line in content:
+
+        # Used to save the reports as the page name
+        output_name = line.rsplit('/',1)[1]
 
          # Run through parameters
         if args.desktop:
@@ -183,14 +214,14 @@ with open('urls.txt') as lighthouseurls:
             
         # Check for both flag, this will run as default if one is not set.
         else:
-            lh_x = ['lighthouse '+line+' --only-categories="accessibility,best-practices,performance,seo" --quiet --chrome-flags="--headless" --output=json --output-path=./lighthouse_report.json', 'lighthouse '+line+' --only-categories="accessibility,best-practices,performance,seo" --quiet --chrome-flags="--headless" --output=json --output-path=./lighthouse_report.json --form-factor="mobile" --screenEmulation.mobile --screenEmulation.width=360 --screenEmulation.height=640 --screenEmulation.deviceScaleFactor=2']
+            lh_x = ['lighthouse '+line+' --only-categories="accessibility,best-practices,performance,seo" --quiet --chrome-flags="--headless" --output=json --output-path=./lighthouse-reports/desktop/'+output_name+'-desktop.json', 'lighthouse '+line+' --only-categories="accessibility,best-practices,performance,seo" --quiet --chrome-flags="--headless" --output=json --output-path=./lighthouse-reports/mobile/'+output_name+'-mobile.json --form-factor="mobile" --screenEmulation.mobile --screenEmulation.width=360 --screenEmulation.height=640 --screenEmulation.deviceScaleFactor=2']
 
         # If statement for processing mobile, desktop or both lighthouse reports.
         if len(lh_x) == 2:
             for lh_url in lh_x:
-                process_lighthouse(lh_url)
+                lighthouse(lh_url)
         else: 
-            process_lighthouse(lh_x)
+            lighthouse(lh_x)
 
     file.close()
-print("Reports have been generated!")
+print("Reports have been generated!\n")

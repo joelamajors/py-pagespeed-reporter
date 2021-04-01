@@ -133,3 +133,7 @@ dmypy.json
 
 # txt files
 *.txt
+
+# ignoring lighthouse and pagespeed reports
+lighthouse-reports/*
+pagespeed-reports/*
