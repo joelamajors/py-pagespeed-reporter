@@ -7,23 +7,6 @@ import time
 import concurrent.futures
 import concurrent.futures
 import shutil
-from glob import glob
-
-
-# def get_page_name(link): 
-#     # Gets name of page
-#     file_name = link.rsplit('/',1)[1]
-
-#     # mobile or desktop
-#     if '--form-factor="mobile"' in link or '?strategy=mobile' in link:
-#         device_test = "Mobile"
-#     else:
-#         device_test = "Desktop"
-
-#     file_name = file_name + "-" + device_test.lower()
-
-#     print(file_name)
-#     return file_name
 
 # Generate CSV data for lighthouse results
 def lighthouse_csv_report(path):
@@ -291,3 +274,6 @@ with open(folder_name+'/pagespeed-reports/pagespeed_report.csv', 'w+') as ps_csv
     #Threading to generate Pagespeed CSV results
     with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.map(pagespeed_csv_report, pagespeed_csvs)
+
+print(""*3)
+print(" Reports have been generated!")
