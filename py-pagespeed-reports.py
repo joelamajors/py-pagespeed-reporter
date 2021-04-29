@@ -5,14 +5,13 @@ import os
 import json
 import time
 import concurrent.futures
-import concurrent.futures
 import shutil
 
 # Generate CSV data for lighthouse results
 def lighthouse_csv_report(path):
 
     # Calculating if query is for mobile or desktop
-    if '\lighthouse-reports\mobile"' in path:
+    if '\\lighthouse-reports\\mobile' in path:
         lh_type = "Mobile"
     else:
         lh_type = "Desktop"
@@ -25,7 +24,10 @@ def lighthouse_csv_report(path):
         lh_url = str(loaded_json["requestedUrl"])
 
         # Page Name
-        page_name = lh_url.rsplit('/', 1)[1]
+        page_name = lh_url.rsplit('/', 1)[1].strip()
+
+        if page_name == "":            
+            page_name = "home"
 
         lh_performance = str(round(loaded_json["categories"]["performance"]["score"] * 100))
         lh_seo = str(round(loaded_json["categories"]["seo"]["score"] * 100))
@@ -69,7 +71,10 @@ def pagespeed_csv_report(path):
             ID2 = ID2.replace('?strategy=mobile', '')
 
         # Page Name
-        page_name = ID2.rsplit('/', 1)[1]
+        page_name = ID2.rsplit('/', 1)[1].strip()
+
+        if page_name == "":
+            page_name = "home"
 
         # Overall Score
         overall_score = round(loaded_json["lighthouseResult"]["categories"]["performance"]["score"] * 100)
