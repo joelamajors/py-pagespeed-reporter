@@ -18,6 +18,6 @@ This script runs Pagespeed insight AND Lighthouse reports across a list of URLs.
 - Update the urls.txt with each url on their own line.
 
 ### Command Usage:
-`python ./pagespeed-insight.py`
-  
+`python ./py-pagespeed-reports.py`
+
 Once this is finished, you will see a folder generated with the site name that will have the CSV's there, as well as the JSON files.
