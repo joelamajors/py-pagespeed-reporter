@@ -136,3 +136,5 @@ dmypy.json
 
 # ignoring lighthouse and pagespeed reports
 */
+
+.DS_Store
