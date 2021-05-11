@@ -4,7 +4,7 @@ This script runs Pagespeed insight AND Lighthouse reports across a list of URLs.
 ## Requirements
 - Python 3
 - Pagespeed Insights API key
-  - (Refer to this link on getting started (https://developers.google.com/speed/docs/insights/v5/get-started)
+  - (Refer to this link on getting started (https://developers.google.com/speed/docs/insights/v5/get-started ))
 - Add API key to environment variable
   - The variable name should be stored as `pagespeed`.
 - Lighthouse npm installed globally
