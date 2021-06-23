@@ -136,3 +136,6 @@ dmypy.json
 
 # ignoring lighthouse and pagespeed reports
 */
+
+# ignoring MacOS icon generation
+.DS_Store
