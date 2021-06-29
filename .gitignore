@@ -139,3 +139,4 @@ dmypy.json
 
 # ignoring MacOS icon generation
 .DS_Store
+urls.txt
