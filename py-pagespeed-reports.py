@@ -16,7 +16,6 @@ def lighthouse_csv_report(path):
         lh_type = "Desktop"
 
     with open(path, 'r', encoding='utf8') as json_data:
-
         loaded_json = json.load(json_data)
 
         # Getting scores
@@ -60,16 +59,25 @@ def lighthouse_csv_report(path):
                                       ["score"] * 100))
 
         try:
-            row = f'{lh_url},{page_name},{lh_type},{lh_performance},\
-                    {lh_accessibility},{lh_best_practice},{lh_seo},\
-                    {lh_fcp},{lh_speed_index},{lh_lcp},\
-                    {lh_interactice},{lh_tbt},{lh_cls}\n'
+            row = f'{lh_url},'\
+                f'{page_name},'\
+                f'{lh_type},'\
+                f'{lh_performance},'\
+                f'{lh_accessibility},'\
+                f'{lh_best_practice},'\
+                f'{lh_seo},'\
+                f'{lh_fcp},'\
+                f'{lh_speed_index},'\
+                f'{lh_lcp},'\
+                f'{lh_interactice},'\
+                f'{lh_tbt},'\
+                f'{lh_cls}\n'
             lh_csv_base.write(row)
         except NameError:
             print(f'<NameError> Failing because of KeyError {line}.')
             lh_csv_base.write(f'<KeyError> &\
                                 <NameError> Failing because of\
-                                nonexistant Key ~ {line}.' + '\n')
+                                nonexistant Key ~ {line}.\n')
 
 
 # Generate CSV data for pagespeed results
@@ -77,7 +85,6 @@ def pagespeed_csv_report(path):
 
     # Calculating if query is for mobile or desktop
     if '\\pagespeed-reports\\mobile' in path:
-
         ps_type = "Mobile"
     else:
         ps_type = "Desktop"
@@ -152,8 +159,16 @@ def pagespeed_csv_report(path):
 
         # Writing output to CSV file
         try:
-            row = f'{ID2},{page_name},{ps_type},{overall_score_2},\
-                    {fcp2},{si2},{lcp2},{tti2},{tbt2},{ls2}\n'
+            row = f'{ID2},'\
+                  f'{page_name},'\
+                  f'{ps_type},'\
+                  f'{overall_score_2},'\
+                  f'{fcp2},'\
+                  f'{si2},'\
+                  f'{lcp2},'\
+                  f'{tti2},'\
+                  f'{tbt2},'\
+                  f'{ls2}\n'
             ps_csv_base.write(row)
         except NameError:
             print(f'<NameError> Failing because of KeyError {line}.')
@@ -165,28 +180,22 @@ def pagespeed_csv_report(path):
 def create_sub_folders(name):
 
     # Creating folders for data dump
-    if not os.path.exists(name + "/lighthouse-reports"):
-        os.makedirs(name + "/lighthouse-reports/desktop")
-        os.makedirs(name + "/lighthouse-reports/mobile")
+    if not os.path.exists(name+"/lighthouse-reports"):
+        os.makedirs(name+"/lighthouse-reports/desktop")
+        os.makedirs(name+"/lighthouse-reports/mobile")
 
-    if not os.path.exists(name + "/pagespeed-reports/"):
-        os.makedirs(name + "/pagespeed-reports/desktop")
-        os.makedirs(name + "/pagespeed-reports/mobile")
+    if not os.path.exists(name+"/pagespeed-reports/"):
+        os.makedirs(name+"/pagespeed-reports/desktop")
+        os.makedirs(name+"/pagespeed-reports/mobile")
 
 
 # Pagespeed Insight Function - takes the requesting URL as a parameter
 def link_queries(link):
 
     # Append pagespeed query to link
-    key = "&key=" + pagespeed_key
+    key = "&key="+pagespeed_key
 
-    runPageSpeedLink = '''https://www.googleapis.com/
-                        pagespeedonline/v5/runPagespeed?url ='''
-
-    lighthouse_extras = ' --only-categories="accessibility,' +\
-                        'best-practices, performance, seo"' +\
-                        ' --quiet --chrome-flags="--headless" ' +\
-                        ' --output=json --output-path='
+    runPageSpeedLink = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url='
 
     pagespeed_desktop = runPageSpeedLink + link + '?strategy=desktop' + key
     pagespeed_mobile = runPageSpeedLink + link + '?strategy=mobile' + key
@@ -194,26 +203,28 @@ def link_queries(link):
     pagespeed_links.add(pagespeed_desktop)
     pagespeed_links.add(pagespeed_mobile)
 
+    lighthouse_line = 'lighthouse '\
+                      + line\
+                      + ' --only-categories="accessibility,'\
+                      + ' best-practices, performance, seo"'\
+                      + ' --quiet --chrome-flags="--headless"'\
+                      + ' --output=json --output-path='\
+                      + folder_name
+
     # Desktop and mobile parameters for lighthouse reports
-    lighthouse_desktop = 'lighthouse ' +\
-                         line +\
-                         lighthouse_extras +\
-                         folder_name +\
-                         '/lighthouse-reports/desktop/' +\
-                         output_name +\
-                         '-desktop.json'
-    lighthouse_mobile = 'lighthouse ' +\
-                        line +\
-                        lighthouse_extras +\
-                        folder_name +\
-                        '/lighthouse-reports/mobile/' +\
-                        output_name +\
-                        '-mobile.json' +\
-                        ' --form-factor="mobile"' +\
-                        ' --screenEmulation.mobile' +\
-                        ' --screenEmulation.width=360' +\
-                        ' --screenEmulation.height=640' +\
-                        ' --screenEmulation.deviceScaleFactor=2'
+    lighthouse_desktop = f'{lighthouse_line}'\
+        + '/lighthouse-reports/desktop/'\
+        + f'{output_name}'\
+        + '-desktop.json'
+
+    lighthouse_mobile = f'{lighthouse_line}'\
+        + '/lighthouse-reports/mobile/'\
+        + f'{output_name}'\
+        + '-mobile.json --form-factor="mobile"'\
+        + ' --screenEmulation.mobile'\
+        + ' --screenEmulation.width=360'\
+        + ' --screenEmulation.height=640'\
+        + ' --screenEmulation.deviceScaleFactor=2'
 
     lighthouse_links.add(lighthouse_desktop)
     lighthouse_links.add(lighthouse_mobile)
@@ -231,11 +242,17 @@ def lighthouse_data(link):
         lh_type = "Desktop"
 
     # Calculating path for light house reports
-    data_export = "./" + folder_name + \
+    data_export = "./"\
+                  f"{folder_name}"\
                   "/lighthouse-reports/"\
-                  + lh_type.lower() + "/"\
-                  + output_name + "-" +\
-                  lh_type.lower() + ".json"
+                  f"{lh_type.lower()}"\
+                  "/"\
+                  f"{output_name}"\
+                  "-"\
+                  f"{lh_type.lower()}"\
+                  ".json"
+
+    print(data_export)
 
     # Check if report is completed, if not, then wait until it's finished.
     while not os.path.exists(data_export):
@@ -258,9 +275,17 @@ def pagespeed_data(link):
         test_type = "Desktop"
 
     # Paths for data dump
-    pagespeed_path = "./" + folder_name + "/pagespeed-reports/" +\
-                     test_type.lower() + "/" + pagespeed_file_name +\
-                     "-" + test_type.lower() + ".json"
+    pagespeed_path = "./"\
+                     f"{folder_name}"\
+                     "/pagespeed-reports/"\
+                     f"{test_type.lower()}"\
+                     "/"\
+                     f"{pagespeed_file_name}"\
+                     "-"\
+                     f"{test_type.lower()}"\
+                     ".json"
+
+    print(pagespeed_path)
 
     # Saving JSON file
     with open(pagespeed_path, "w+") as pagespeed_json_file:
@@ -294,7 +319,6 @@ spaces = ' ' * 40
 
 # Getting file name to save data dumps to
 with open("urls.txt") as f:
-
     # Getting folder name, and checks
     name = f.readlines()
     folder_name = name[0].split('/')[2].strip().split(".", 1)
@@ -318,21 +342,20 @@ with open("urls.txt") as f:
         # Calls function to add links to sets
         link_queries(line)
 
-
-print(f" Generating Lighthouse JSON files... + {spaces}", end="\r")
+print(f" Generating Lighthouse JSON files... {spaces}", end="\r")
 
 # Threading lighthouse report with the lighthouse_data() function
 with concurrent.futures.ThreadPoolExecutor() as executor:
     executor.map(lighthouse_data, lighthouse_links)
 
-print(f" Generating Pagespeed Insight JSON files...  + {spaces}", end="\r")
+print(f" Generating Pagespeed Insight JSON files... {spaces}", end="\r")
 
 # Threading pagespeed insight report with the pagespeed_data() function
 with concurrent.futures.ThreadPoolExecutor() as executor:
     executor.map(pagespeed_data, pagespeed_links)
 
 # Parse through JSON files and add them to set.
-#  We will use the set to run through each JSON file and update the CSV report
+# We will use the set to run through each JSON file and update the CSV report
 for paths, subdirs, files in os.walk(folder_name, topdown=False):
 
     # For each file, if it's a .json file, add this to the correct set.
@@ -347,14 +370,14 @@ for paths, subdirs, files in os.walk(folder_name, topdown=False):
             pagespeed_csvs.add(full_path)
 
 # Creating CSV for Lighthouse.
-with open(folder_name +
-          '/lighthouse-reports/lighthouse_report.csv',
+with open(folder_name
+          + '/lighthouse-reports/lighthouse_report.csv',
           'w+') as lh_csv_base:
-    columnTitleRow = 'URL, Page, Mobile/Desktop, Performance,' +\
-                     ' Accessibility, Best-Practices, SEO,' +\
-                     ' First-Contentful-Paint, Speed-index,' +\
-                     ' Largest-Contentful-Paint, Interactive,' +\
-                     ' Total-Blocking-Time, Cumulative-Layout-Shift\n'''
+
+    columnTitleRow = 'URL, Page, Mobile/Desktop, Performance, Accessibility,'\
+                     ' Best-Practices, SEO, First-Contentful-Paint, Speed-index,'\
+                     ' Largest-Contentful-Paint, Interactive,'\
+                     ' Total-Blocking-Time, Cumulative-Layout-Shift\n'
     lh_csv_base.write(columnTitleRow)
 
     # Threading to generate Lighthouse results
@@ -362,17 +385,19 @@ with open(folder_name +
         executor.map(lighthouse_csv_report, lighthouse_csvs)
 
 # Creating CSV for Pagespeed.
-with open(folder_name +
-          '/pagespeed-reports/pagespeed_report.csv',
+with open(folder_name
+          + '/pagespeed-reports/pagespeed_report.csv',
           'w+') as ps_csv_base:
-    columnTitleRow = 'URL, Page, Mobile/Desktop, Overall Score,' +\
-                     ' First-Contentful-Paint, Speed Index,' +\
-                     ' Largest-Contentful-Paint, Time-To-Interactive,' +\
-                     ' Total-Blocking-Time, Cumulative-Layout-Shift\n'''
+
+    columnTitleRow = 'URL, Page, Mobile/Desktop, Overall Score,'\
+                     ' First-Contentful-Paint, Speed Index,'\
+                     ' Largest-Contentful-Paint, Time-To-Interactive,'\
+                     ' Total-Blocking-Time, Cumulative-Layout-Shift\n'
     ps_csv_base.write(columnTitleRow)
+
     # Threading to generate Pagespeed CSV results
     with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.map(pagespeed_csv_report, pagespeed_csvs)
 
-print("" * 3)
+print(""*3)
 print(" Reports have been generated!")
