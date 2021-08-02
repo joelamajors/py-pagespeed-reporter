@@ -42,10 +42,10 @@ This script runs Pagespeed insight AND Lighthouse reports across a list of URLs.
 
 
 ### Command Usage:
-`python ./py-pagespeed-reports.py`
-
-or
-
 `python3 ./py-pagespeed-reports.py`
 
-Once this is finished, you will see a folder generated with the site name that will have the CSV's there, as well as the JSON files.
+or if `python` is your version 3.x
+
+`python ./py-pagespeed-reports.py`
+
+Once this is finished, you will see a folder generated with the site name, and sub folders for lighthouse and pagespeed. Inside each folder will be the .CSV report. 
