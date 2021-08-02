@@ -4,6 +4,8 @@ import os
 import json
 import time
 import concurrent.futures
+import re
+import subprocess
 
 # Generate CSV data for lighthouse results
 def lighthouse_csv_report(path):
@@ -22,10 +24,12 @@ def lighthouse_csv_report(path):
         lh_url = str(loaded_json["requestedUrl"])
 
         # Page Name
-        page_name = lh_url.rsplit('/', 1)[1].strip()
-
-        if page_name == "":            
+        reg_page_name = re.search('[^/]+(?=/$|$)', lh_url)
+        page_name = reg_page_name.group(0)
+    
+        if page_name == domain_name:
             page_name = "home"
+
 
         lh_performance = str(round(loaded_json["categories"]["performance"]["score"] * 100))
         lh_seo = str(round(loaded_json["categories"]["seo"]["score"] * 100))
@@ -69,9 +73,11 @@ def pagespeed_csv_report(path):
             ID2 = ID2.replace('?strategy=mobile', '')
 
         # Page Name
-        page_name = ID2.rsplit('/', 1)[1].strip()
+        reg_page_name = re.search('[^/]+(?=/$|$)', ID2)
+        page_name = reg_page_name.group(0)
+    
 
-        if page_name == "":
+        if page_name == domain_name:
             page_name = "home"
 
         # Overall Score
@@ -135,9 +141,9 @@ def link_queries(link, output_name):
     pagespeed_links.add(pagespeed_mobile)
 
     # Desktop and mobile parameters for lighthouse reports
-    lighthouse_desktop = 'lighthouse '+link+' --only-categories="accessibility,best-practices,performance,seo" --quiet --chrome-flags="--headless" --output=json --output-path='+folder_name+'/lighthouse-reports/desktop/'+output_name+'-desktop.json'
+    lighthouse_desktop = (f'lighthouse {link} --only-categories="accessibility,best-practices,performance,seo" --quiet --chrome-flags="--headless" --output=json --output-path="{folder_name}/lighthouse-reports/desktop/{output_name}-desktop.json" 2>&1')
 
-    lighthouse_mobile = 'lighthouse '+link+' --only-categories="accessibility,best-practices,performance,seo" --quiet --chrome-flags="--headless" --output=json --output-path='+folder_name+'/lighthouse-reports/mobile/'+output_name+'-mobile.json --form-factor="mobile" --screenEmulation.mobile --screenEmulation.width=360 --screenEmulation.height=640 --screenEmulation.deviceScaleFactor=2'
+    lighthouse_mobile = (f'lighthouse {link} --only-categories="accessibility,best-practices,performance,seo" --quiet --chrome-flags="--headless" --output=json --output-path="{folder_name}/lighthouse-reports/mobile/{output_name}-mobile.json" --form-factor="mobile" --screenEmulation.mobile --screenEmulation.width=360 --screenEmulation.height=640 --screenEmulation.deviceScaleFactor=2 2>&1')
 
     lighthouse_links.add(lighthouse_desktop)
     lighthouse_links.add(lighthouse_mobile)
@@ -145,25 +151,27 @@ def link_queries(link, output_name):
 # Downloading Lighthouse JSON files
 def lighthouse_data(link):
 
-    os.system(link)
-
-    # Calculating if query is for mobile or desktop
-    if '--form-factor="mobile"' in link:
-        lh_type = "Mobile"
-    else:
-        lh_type = "Desktop"
-
-    # Calculating path for light house reports
-    data_export = "./"+folder_name+"/lighthouse-reports/"+lh_type.lower()+"/"+output_name+"-"+lh_type.lower()+".json"
-    
-    # Check if report is completed, if not, then wait until it's finished. 
-    while not os.path.exists(data_export):
-        time.sleep(1)
+    process = subprocess.Popen(link, shell=True, stdout=subprocess.PIPE)
+    process.wait()
 
 # Downloading Pagespeed insight JSON files
 def pagespeed_data(link):
 
-    pagespeed_file_name = link.rsplit('/',1)[1].rsplit('?')[0]
+    # Extract for getting URLs
+    pagespeed_link_extract = re.search('(?<=url=)https?://.*(?=\?)', link)
+
+    # Selector we use for accessing this
+    parsed_link_extract = pagespeed_link_extract.group(0)
+    
+    # From the selector, do another Regex query
+    pagespeed_page_extract = re.search('[^/]+(?=/$|$)', parsed_link_extract)
+
+    # name of page
+    pagespeed_file_name = pagespeed_page_extract.group(0)
+
+
+    if pagespeed_file_name == domain_name:
+        pagespeed_file_name = 'home'
 
     r = requests.get(link)
     final = r.json()
@@ -182,11 +190,6 @@ def pagespeed_data(link):
     with open(pagespeed_path, "w+") as pagespeed_json_file:
         json.dump(final, pagespeed_json_file)
 
-
-# Setting up arguments for script
-parser = argparse.ArgumentParser(description='Pagespeed Insight API script')
-
-args = parser.parse_args()
 
 # Pagespeed API Key
 pagespeed_key = os.environ['pagespeed']
@@ -207,8 +210,16 @@ with open("urls.txt") as f:
 
     # Getting folder name, and checks
     name = f.readlines()
-    folder_name = name[0].split('/')[2].strip().split(".", 1)
-    folder_name = folder_name[0]
+
+    folder_name = name[0]
+
+    # Getting domain name, used for conditional to tell if this is the home page or not. 
+    domain_name = re.compile('https?://([A-Za-z_0-9.-]+).*')
+    domain_name = domain_name.match(folder_name).group(1)
+
+    # File name, which is the name of the client/site
+    reg_folder_name = re.compile('(.*.//)([a-z]*)')
+    folder_name = reg_folder_name.match(folder_name).group(2)
 
     # If directory doesn't exist, make it
     if not os.path.isdir(folder_name):
@@ -221,17 +232,18 @@ with open("urls.txt") as f:
     name = [line.rstrip('\n') for line in name]
     
     for line in name:
-                
-        # Used to save the reports as the page name
-        output_name = line.rsplit('/',1)[1]
+        
+        reg_output_name = re.search('[^/]+(?=/$|$)', line)
 
-        # If the output name is nothing after parsing, then this is the home page
-        if output_name == '':
+        # Used to save the reports as the page name
+        output_name = reg_output_name.group(0)
+
+        # If the output name matches the domain name, then this is the home page
+        if output_name == domain_name:
             output_name = 'home'
 
         # Calls function to add links to sets
         link_queries(line, output_name)
-
 
 print(f" Generating Lighthouse JSON files..." + spaces, end="\r")
 
@@ -245,6 +257,7 @@ print(f" Generating Pagespeed Insight JSON files..."  + spaces, end="\r")
 # Threading pagespeed insight report with the pagespeed_data() function
 with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
     executor.map(pagespeed_data, pagespeed_links)
+
 
 # Parase through JSON files and add them to set. We will use the set to run through each JSON file and update the CSV report
 for paths, subdirs, files in os.walk(folder_name, topdown=False):
@@ -268,6 +281,7 @@ with open(folder_name+'/lighthouse-reports/lighthouse_report.csv', 'w+') as lh_c
     #Threading to generate Lighthouse results
     with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.map(lighthouse_csv_report, lighthouse_csvs)
+
 
 # Creating CSV for Pagespeed.
 with open(folder_name+'/pagespeed-reports/pagespeed_report.csv', 'w+') as ps_csv_base:
